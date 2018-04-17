@@ -2,6 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+int compare_scores(const void*, const void*);
+int compare_scores_desc(const void*, const void*);
+int compare_areas(const void*, const void*);
+int compare_areas_desc(const void*, const void*);
+
 int main() {
 	int scores[] = {543,323,32,554,11,3,112};
 	qsort(scores, 7, sizeof(int), compare_scores_desc);

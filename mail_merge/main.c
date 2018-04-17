@@ -12,6 +12,7 @@ void dump(response);
 void second_chance(response);
 void marriage(response);
 
+//key part here!!!
 void (*replies[])(response) = {dump, second_chance, marriage};
 
 int main() {

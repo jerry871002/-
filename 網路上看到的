@@ -1,0 +1,33 @@
+//以下內容取自https://dotblogs.com.tw/brian/2012/10/18/77588
+
+指標的宣告
+	int* p, q;
+
+	不要把這行誤解成 p ， q 都是指向 int 之指標，事實上， q 只是一個 int 變數。上面這行相當於
+
+	int *p, q; 或 int *p; int q;	
+
+	如果 p ， q 都要宣告成指向int之指標，應寫成：
+
+	int *p, *q;
+
+	或者乾脆分兩行寫：
+
+	int* p;
+	int* q;
+
+常數與指標的讀法
+	關鍵在於： * 與 const 的前後關係!
+	當 * 在 const 之前，則是常數指標，反之則為常數變數。因此，
+	
+	const double *ptr;    // ptr指向常數變數
+	double *const ptr;    // ptr是常數指標
+	double const* ptr;    // ptr指向常數變數
+	const double *const ptr;    // 指向常數變數的常數指標
+	
+	事實上，在 The C++ Programming Language 中有提到一個簡單的要訣：由右向左讀!!讓我們用這個要訣再來試一次。
+	
+	const double *ptr;    // ptr is a pointer points to double, which is a constant
+	double *const ptr;    // ptr is a constant pointer points to double
+	double const* ptr;    // ptr is a pointer points to constant double
+	const double *const ptr;    // ptr is a constant pointer points to double, which is a constant

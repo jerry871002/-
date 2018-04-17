@@ -4,8 +4,8 @@
 
 int compare_scores(const void*, const void*);
 int compare_scores_desc(const void*, const void*);
-int compare_areas(const void*, const void*);
-int compare_areas_desc(const void*, const void*);
+int compare_names(const void*, const void*);
+int compare_names_desc(const void*, const void*);
 
 int main() {
 	int scores[] = {543,323,32,554,11,3,112};
@@ -16,9 +16,9 @@ int main() {
 	}
 
 	char *names[] = {"Karen", "Mark", "Brett", "Molly"};
-	qsort(names, 4, sizeof(char), compare_names);
+	qsort(names, 4, sizeof(char*), compare_names);
 	puts("These are the names in order:");
-	for(int i = 0; i < 7; i++) {
+	for(int i = 0; i < 4; i++) {
 		printf("%s\n", names[i]);
 	}
 

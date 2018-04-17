@@ -48,7 +48,7 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 
 指向函式的指標
 	回傳類型(*指標變數)(參數型別)
-	eg. char** (*names_fn)(char*, int)
+	e.g. char** (*names_fn)(char*, int)
 
 排序函式（sort function）與比較器函式（comparator function）
 	在 stdlib.h 裡面有一個 qsort() 函式，看起來長這樣
@@ -57,6 +57,11 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 		  size_t item_size, //陣列裡每個元素的尺寸
 		  int (*compar)(const void *, const void *)); //指向比較陣列裡頭兩個項目的函式
 	示範的程式放在資料夾 qsort_with_comparator 裡面
+
+函式指標陣列
+	回傳類型(*指標變數[])(參數型別)
+	e.g. void (*replies[])(response) = {dump, second_chance, marriage}; //陣列裡面存放指向函式的指標
+	範例程式在 mail_merge 裡面
 
 P.330 要好好讀一下
 P.338 也看不太懂

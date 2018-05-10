@@ -76,7 +76,7 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 	void print_ints(int args, ...) { //「...」被稱作「省略」（ellipsis），告訴你後面還有東西
 		va_list ap; //va_list 用來儲存要傳進你的函式的額外引數
 		va_start(ap, args); //va_start 指名可變動引數從哪裡開始
-		for(int i = 0; i < args; i++) 
+		for(int i = 0; i < args; i++)
 			printf("argument: %d\n", va_arg(ap, int)); //va_arg 接受兩個值：va_list 和下一個引數的「型別」
 		va_end(ap); //讀完之後記得要結束
 	}
@@ -90,5 +90,27 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 	2.至少要有一個固定參數
 	3.如果嘗試讀取比傳進來的還要多的引數，會發生隨機錯誤（random error）
 
+使用 -I 選項來告訴編譯器去哪找標頭檔
+	gcc -I/my_header_files test_code.c ... -o test_code
+	這樣就可以直接用 #include<some_header.h> 了（尖括號）
 
-下一章是靜態與動態程式庫
+收藏檔五四三
+	收藏檔包含 .o 目的檔
+	用 nm 指令檢視收藏檔的內容
+		nm libl.a
+	使用 ar 命令建立收藏檔
+		ar -rcs libhfsecutity.a encrypt.o checksum.o
+			r 表示如果 .a 檔已經存在則更新
+			c 表示建立收藏檔而沒有回饋訊息
+			s 叫 ar 指令在 .a 檔案開頭處建立索引（index）
+			收藏檔總是該命名為 lib<something>.a
+	編譯
+		gcc test_code.c -lhfsecutity -o test_code
+		hfsecutity 叫編譯器尋找名為 libhfsecutity.a 的收藏檔
+		如果收藏檔放在其他地方，用 -L 選項指名要搜尋哪些目錄
+			gcc test_code.c -L/my_lib -lhfsecutity -o test_code
+			-L 旗標應該出現在 gcc 指令裡頭的原始碼檔案之後
+
+動態程式庫
+	用 -shared 旗標
+		gcc -shared hfcal.o -o /libs/libhfcal.dylib

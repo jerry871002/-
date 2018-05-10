@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <hfcal.h>
 
-int main() {
-    display_calories(115.2, 11.3, 0.79);
-    return 0;
+void display_calories(float weight, float distance, float coeff) {
+    printf("Weight: %3.2f lbs\n", weight);
+    printf("Distance: %3.2f miles\n", distance);
+    printf("Calories burned: %4.2f cal\n", coeff * weight * distance);
 }

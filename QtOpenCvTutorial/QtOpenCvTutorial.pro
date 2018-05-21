@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2018-05-15T16:48:22
+# Project created by QtCreator 2018-05-21T21:26:48
 #
 #-------------------------------------------------
 
@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = qt_calculator
+TARGET = QtOpenCvTutorial
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -25,10 +25,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        qcvwidget.cpp \
+        opencvworker.cpp
 
 HEADERS += \
-        mainwindow.h
+        qcvwidget.h \
+        opencvworker.h
 
 FORMS += \
-        mainwindow.ui
+        qcvwidget.ui
+
+LIBS += \
+        /usr/local/Cellar/opencv/3.4.1_5/lib/libopencv*
+
+INCLUDEPATH += \
+        /usr/local/Cellar/opencv/3.4.1_5/include

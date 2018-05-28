@@ -19,6 +19,22 @@ OpenCvWorker::~OpenCvWorker()
     delete cap;
 }
 
+void OpenCvWorker::checkIfDeviceAlreadyOpened(const int device)
+{
+    if(cap->isOpened())
+        cap->release();
+
+    cap->open(device);
+}
+
+void OpenCvWorker::process()
+{
+    cv::cvtColor(_frameOriginal, _frameProssed, cv::COLOR_BGR2GRAY);
+
+    if(binaryThresholdEnable)
+        cv::threshold(_frameProssed, _frameOriginal, binaryThreshold, 255, cv::THRESH_BINARY);
+}
+
 void OpenCvWorker::receiveGrabFrame()
 {
     if(!toggleStream)
@@ -35,7 +51,30 @@ void OpenCvWorker::receiveGrabFrame()
     emit sendFrame(output);
 }
 
-void OpenCvWorker::process()
+void OpenCvWorker::receiveSetup(const int device)
 {
+    checkIfDeviceAlreadyOpened(device);
 
+    if(!cap->isOpened())
+    {
+        status = false;
+        return;
+    }
+
+    status = true;
+}
+
+void OpenCvWorker::receiveToggleStream()
+{
+    toggleStream = !toggleStream;
+}
+
+void OpenCvWorker::receiveEnableBinaryThreshold()
+{
+    binaryThresholdEnable = !binaryThresholdEnable;
+}
+
+void OpenCvWorker::receiveBinaryThreshold(int threshold)
+{
+    binaryThreshold = threshold;
 }

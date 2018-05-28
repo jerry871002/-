@@ -2,6 +2,7 @@
 #define QCVWIDGET_H
 
 #include <QWidget>
+#include <QThread>
 
 namespace Ui {
 class QCvWidget;
@@ -17,6 +18,17 @@ public:
 
 private:
     Ui::QCvWidget *ui;
+    QThread *thread;
+
+    void setup();
+
+signals:
+    void sendSetup(int device);
+    void sendToggleStream();
+
+private slots:
+    void receiveFrame(QImage frame);
+    void receiveToggleStream();
 };
 
 #endif // QCVWIDGET_H

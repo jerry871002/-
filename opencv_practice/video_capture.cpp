@@ -1,5 +1,8 @@
+// use "g++ `pkg-config --cflags --libs opencv` video_capture.cpp" to compile
+
 #include <cstdio>
 #include <opencv2/opencv.hpp>
+
 using namespace cv;
 
 int main(){

@@ -10,5 +10,9 @@ QCvWidget::QCvWidget(QWidget *parent) :
 
 QCvWidget::~QCvWidget()
 {
+    thread->quit();
+    while (!thread->isFinished());
+
+    delete thread;
     delete ui;
 }

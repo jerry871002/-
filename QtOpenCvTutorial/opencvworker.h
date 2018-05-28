@@ -22,6 +22,7 @@ private:
     bool binaryThresholdEnable;
     int binaryThreshold;
 
+    void checkIfDeviceAlreadyOpened(const int device);
     void process();
 
 public:

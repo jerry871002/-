@@ -166,3 +166,21 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 
 			char *my_env[] = {"JUICE=peach and apple", NULL}; //陣列的最後一個項目必須是 NULL
 			execle("dinner_info", "dinner_info", "4", NULL, my_env); //這裡需要 NULL 告訴函式沒有其他引數了
+
+			結果會長這樣：
+			Dinners: 4
+			Juice: peach and apple
+
+	系統呼叫的錯誤處理
+		如果 exec() 呼叫成功，當前程式便會停止執行，因此，假如程式在呼叫 exec() 之後還在執行任何工作，那一定是有問題
+
+		也可以檢查 exec() 函式是否回傳 -1
+
+		errno 變數是儲存在 errno.h 裡的全域變數，有一連串標準錯誤值：
+			EPERM=1 Operation not permitted
+			ENOENT=2 No such file or directory
+			ESRCH=3 No such process
+		可以使用 string.h 裡的 strerror() 函式查詢標準錯誤訊息：
+			puts(strerror(errno)); //將錯誤數字轉換為錯誤訊息
+
+		相關的範例放在 exec_error_handle 裡面

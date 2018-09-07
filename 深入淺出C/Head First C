@@ -112,5 +112,21 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 			-L 旗標應該出現在 gcc 指令裡頭的原始碼檔案之後
 
 動態程式庫
+	動態程式庫在執行時期（runtime）才被連結到程式
+	在不同的作業系統上有不同的名稱
+		1.hfcal.dll（Windows 上的 MinGW）
+		2.libhfcal.dll.a（Windows 上的 Cygwin）
+		3.libhfcal.so（Linux 或 Unix）
+		4.libhfcal.dylib（Mac）
+	備註：so 代表共用目的檔（shared object file），dylib 代表動態程式庫（dynamic library）
 	用 -shared 旗標
 		gcc -shared hfcal.o -o /libs/libhfcal.dylib
+
+靜態與動態程式庫的範例在 static-library 跟 dynamic-library 裡面
+
+行程與系統呼叫
+	system() 接受單一參數並執行，就像直接在命令列上輸入一樣，簡單又方便
+	system("ls -l");
+
+	但是 system() 函式並不安全，有可能被住入（inject）程式碼片段，範例在 unsafe_system_call 裡面
+	這個範例還有其他可能遇到的問題，詳情請洽第 403 頁

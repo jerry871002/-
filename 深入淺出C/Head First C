@@ -90,43 +90,79 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 	2.至少要有一個固定參數
 	3.如果嘗試讀取比傳進來的還要多的引數，會發生隨機錯誤（random error）
 
-使用 -I 選項來告訴編譯器去哪找標頭檔
-	gcc -I/my_header_files test_code.c ... -o test_code
-	這樣就可以直接用 #include<some_header.h> 了（尖括號）
+第八章、動態與靜態程式庫
 
-收藏檔五四三
-	收藏檔包含 .o 目的檔
-	用 nm 指令檢視收藏檔的內容
-		nm libl.a
-	使用 ar 命令建立收藏檔
-		ar -rcs libhfsecutity.a encrypt.o checksum.o
-			r 表示如果 .a 檔已經存在則更新
-			c 表示建立收藏檔而沒有回饋訊息
-			s 叫 ar 指令在 .a 檔案開頭處建立索引（index）
-			收藏檔總是該命名為 lib<something>.a
-	編譯
-		gcc test_code.c -lhfsecutity -o test_code
-		hfsecutity 叫編譯器尋找名為 libhfsecutity.a 的收藏檔
-		如果收藏檔放在其他地方，用 -L 選項指名要搜尋哪些目錄
-			gcc test_code.c -L/my_lib -lhfsecutity -o test_code
-			-L 旗標應該出現在 gcc 指令裡頭的原始碼檔案之後
+	使用 -I 選項來告訴編譯器去哪找標頭檔
+		gcc -I/my_header_files test_code.c ... -o test_code
+		這樣就可以直接用 #include<some_header.h> 了（尖括號）
 
-動態程式庫
-	動態程式庫在執行時期（runtime）才被連結到程式
-	在不同的作業系統上有不同的名稱
-		1.hfcal.dll（Windows 上的 MinGW）
-		2.libhfcal.dll.a（Windows 上的 Cygwin）
-		3.libhfcal.so（Linux 或 Unix）
-		4.libhfcal.dylib（Mac）
-	備註：so 代表共用目的檔（shared object file），dylib 代表動態程式庫（dynamic library）
-	用 -shared 旗標
-		gcc -shared hfcal.o -o /libs/libhfcal.dylib
+	收藏檔五四三
+		收藏檔包含 .o 目的檔
+		用 nm 指令檢視收藏檔的內容
+			nm libl.a
+		使用 ar 命令建立收藏檔
+			ar -rcs libhfsecutity.a encrypt.o checksum.o
+				r 表示如果 .a 檔已經存在則更新
+				c 表示建立收藏檔而沒有回饋訊息
+				s 叫 ar 指令在 .a 檔案開頭處建立索引（index）
+				收藏檔總是該命名為 lib<something>.a
+		編譯
+			gcc test_code.c -lhfsecutity -o test_code
+			hfsecutity 叫編譯器尋找名為 libhfsecutity.a 的收藏檔
+			如果收藏檔放在其他地方，用 -L 選項指名要搜尋哪些目錄
+				gcc test_code.c -L/my_lib -lhfsecutity -o test_code
+				-L 旗標應該出現在 gcc 指令裡頭的原始碼檔案之後
 
-靜態與動態程式庫的範例在 static-library 跟 dynamic-library 裡面
+	動態程式庫
+		動態程式庫在執行時期（runtime）才被連結到程式
+		在不同的作業系統上有不同的名稱
+			1.hfcal.dll（Windows 上的 MinGW）
+			2.libhfcal.dll.a（Windows 上的 Cygwin）
+			3.libhfcal.so（Linux 或 Unix）
+			4.libhfcal.dylib（Mac）
+		備註：Linux 或 Unix 上的 so 代表共用目的檔（shared object file），Mac 上的 dylib 代表動態程式庫（dynamic library）
+		用 -shared 旗標
+			gcc -shared hfcal.o -o /libs/libhfcal.dylib
 
-行程與系統呼叫
-	system() 接受單一參數並執行，就像直接在命令列上輸入一樣，簡單又方便
-	system("ls -l");
+	靜態與動態程式庫的範例在 static-library 跟 dynamic-library 裡面
 
-	但是 system() 函式並不安全，有可能被住入（inject）程式碼片段，範例在 unsafe_system_call 裡面
-	這個範例還有其他可能遇到的問題，詳情請洽第 403 頁
+第九章、行程與系統呼叫
+
+	system() 函式
+		system() 接受單一參數並執行，就像直接在命令列上輸入一樣，簡單又方便
+		system("ls -l");
+
+		但是 system() 函式並不安全，有可能被住入（inject）程式碼片段，範例在 unsafe_system_call 裡面
+		這個範例還有其他可能遇到的問題，詳情請洽第 403 頁
+
+	exec()
+		exec() 函式透過執行某個程式來*替換當前的行程*
+		行程就是*在記憶體裡執行的程式*，作業系統用所謂的*行程識別符*（process identifier，PID）來追蹤每個行程
+
+		exec() 函式有很多不同版本，主要分成兩群，串列（list）函式跟陣列（array）函式
+		串列（list）函式，接受參數串列的命令列引數：
+			execl()
+			execlp() //根據路徑（PATH）搜尋程式
+			execle() //使用環境陣列的字串
+		陣列（array）函式，如果命令列引數已經先存在串列裡面的話：
+			execv()
+			execvp() //根據路徑（PATH）搜尋程式
+			execve() //使用環境陣列的字串
+		看出規則了吧～～
+
+		範例：
+			假如有一個檔案 dinner_info.c，內容如下：
+
+			#include <stdio.h>
+			#include <stdlib.h>
+
+			int main(int argc, char *argv[]) {
+				printf("Dinners: %s\n", argv[1]);
+				printf("Juice: %s\n", getenv("JUICE")); //stdlib.h 裡的 getenv() 讓你讀取環境變數
+				return 0;
+			}
+
+			然後你執行：
+
+			char *my_env[] = {"JUICE=peach and apple", NULL}; //陣列的最後一個項目必須是 NULL
+			execle("dinner_info", "dinner_info", "4", NULL, my_env); //這裡需要 NULL 告訴函式沒有其他引數了

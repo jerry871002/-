@@ -135,7 +135,7 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 		但是 system() 函式並不安全，有可能被住入（inject）程式碼片段，範例在 unsafe_system_call 裡面
 		這個範例還有其他可能遇到的問題，詳情請洽第 403 頁
 
-	exec()
+	exec() 函式
 		exec() 函式透過執行某個程式來*替換當前的行程*
 		行程就是*在記憶體裡執行的程式*，作業系統用所謂的*行程識別符*（process identifier，PID）來追蹤每個行程
 
@@ -184,3 +184,14 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 			puts(strerror(errno)); //將錯誤數字轉換為錯誤訊息
 
 		相關的範例放在 exec_error_handle 裡面
+
+	fork() 函式
+		fork() 會複製你的行程，為當前行程產生完整*副本*
+		原先的行程被稱作*父行程*，新建立的副本叫做*子行程*
+
+		呼叫 fork() 的方法：
+			pid_t pid = fork();
+		pid_t 的型態取決於作業系統，有些使用 short ，有些可能使用 int
+		fork() 回傳 0 的整數值給子行程，回傳正的整數值給父行程，父行程會收到子行程的行程識別符（PID）
+
+		範例（在 rssgossip 裡面）：用 exec() 呼叫 python 程式讀取 RSS 檔案

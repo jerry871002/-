@@ -194,4 +194,38 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 		pid_t 的型態取決於作業系統，有些使用 short ，有些可能使用 int
 		fork() 回傳 0 的整數值給子行程，回傳正的整數值給父行程，父行程會收到子行程的行程識別符（PID）
 
-		範例（在 rssgossip 裡面）：用 exec() 呼叫 python 程式讀取 RSS 檔案
+		範例（在 rssgossip 裡的 newshound.c）：用 exec() 呼叫 python 程式讀取 RSS 檔案
+
+	小整理
+		system() 像控制台命令那樣執行字串
+		fork() 複製當前行程
+		fork() + exec() 建立子行程
+
+第十章、行程間通訊（Interprocess communication）
+
+	檔案描述子是代表資料串流的數字
+	表個的前三個槽位（slot）總是相同
+		槽位 0 是標準輸入
+		槽位 1 是標準輸出
+		槽位 2 是標準錯誤
+
+	使用 > 及 2> 重導向標準輸出和標準錯誤
+		./myprog > output.txt 2> errors.log
+	2 代表描述子表格裡的標準錯誤數字
+
+	也可以把標準錯誤重導向到與標準輸出相同的地方
+		./myprog 2> &1
+	2> 表示「重導向標準錯誤」
+	&1 表示「到標準輸出去」
+
+	fileno() 告訴你描述子
+	dup2() 複製資料串流
+
+	waitpid() 函式
+		在 sys/wait.h 標頭檔裡
+		有三個參數，像這樣用：waitpid(pid, pid_status, options)
+			1.pid：就行程識別符
+			2.pid_status：指向整數的指標（因為需要更新它），儲存行程的*結束資訊*（exit information）
+			3.options：沒事的話設定 0 就好，代表等到該行程結束，欲知詳情，可用 man waitpid 查詢
+
+	以上三個韓式的範例在 rssgossip 裡的 newshound2.c（改編前面的程式來的！）

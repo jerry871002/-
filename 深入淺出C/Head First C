@@ -228,4 +228,25 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 			2.pid_status：指向整數的指標（因為需要更新它），儲存行程的*結束資訊*（exit information）
 			3.options：沒事的話設定 0 就好，代表等到該行程結束，欲知詳情，可用 man waitpid 查詢
 
-	以上三個韓式的範例在 rssgossip 裡的 newshound2.c（改編前面的程式來的！）
+	以上三個函式的範例在 rssgossip 裡的 newshound2.c（改編前面的程式來的！）
+
+	用 pipe() 連接行程
+		先來看看怎麼用
+
+		int fd[2]; // The descriptors will be stored in this array.
+
+		// You pass the name of the array to the pipe() function
+		if (pipe(fd) == -1) {
+			error("Can't create the pipe");
+		}
+
+		其中，fd[1] 是資料的入口（寫入管線），fd[0] 是資料的出口（可以從管線讀取）
+		注意一點是一個管線只能單向傳送資料串流，所以如果是子行程要傳送資料給父行程
+		在子行程中：
+			close(fd[0]); // The child won’t read from the pipe, this will close the read end of the pipe.
+			dup2(fd[1], 1); // The child then connects the write end to the Standard Output
+		在父行程中：
+			dup2(fd[0], 0); // The parent connects the read end to the Standard Output.
+			close(fd[1]); // This will close the write end of the pipe.
+
+		詳細的範例在 rssgossip 裡的 new_opener.c（也是改編前面的程式來的）

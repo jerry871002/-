@@ -250,3 +250,61 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 			close(fd[1]); // This will close the write end of the pipe.
 
 		詳細的範例在 rssgossip 裡的 new_opener.c（也是改編前面的程式來的）
+
+	信號（signal）
+		平常在終端機執行程式時，使用者鍵入 Ctrl-C，程式便終止，實際上發生的流程如下：
+			1.鍵入 Ctrl-C
+			2.作業系統傳送中斷信號
+			3.行程執行它的預設中斷處理器（interrupt handler），呼叫 exit()
+
+		每一種信號都有對應的信號處理器（signal handler），記錄在信號表格（signal table）中，信號處理器的內容可以用自己寫的程式碼取代
+
+		sigaction
+			sigaction 是包含指向函式之指標的 struct，用來告訴作業系統，當某個信號被送給行程時，他應該呼叫哪個函式
+			以下說明如何建立 sigaction
+
+				struct sigaction action; // 建立新動作
+				action.sa_handler = diediedie; // 想要電腦呼叫的函式名稱，sigaction 包裹的函式稱作處理器
+				sigemptyset(&sction.sa_mask); // mask（遮罩）是過濾 sigaction 將處理之信號的機制，通常用空的就好
+				action.sa_flags = 0; // 額外的旗標，平常沒事用 0 就好
+
+			因為所有信號都只是整數值，自訂處理器函式（custom handler function）必須接受 int 引數
+
+			void diediedie(int sig) // sig 是處理器已經捕捉到的信號數字
+			{
+				puts("Goodbye cruel world...\n");
+				exit(1);
+			}
+
+			sigaction 以 sigaction() 註冊
+				用 sigaction() 函式來告訴作業系統我們剛剛建立的 sigaction
+				sigaction() 接受三個參數：
+					sigaction(signal_no, &new_action, &old_action);
+					1.信號數字：你想要處理的信號整數值
+					2.新動作：你想要註冊的 sigaction 的位址
+					3.舊動作：沒事的話用 NULL 就好
+				如果發生失敗，sigaction() 會回傳 -1，並且設定 errno 變數
+
+				把它變得更容易使用一點，寫一個函式把這個過程包起來：
+					int catch_signal(int sig, void (*handler)(int)) // 信號數字跟指向處理器函式的指標
+					{
+						struct sigaction action; // 建立 aciton
+						action.sa_handler = handler; // 將該 action 的處理器函式設定成傳進來的處理器函式
+						sigemptyset(&sction.sa_mask); // 使用空的 mask
+						action.sa_flags = 0;
+						return sigaction(sig, &action, NULL);
+					}
+				用法像這樣：
+					catch_signal(SIGINT, diediedie);
+
+			簡單的範例在 signal_handle 裡的 SIGINT_handle.c
+
+		常出現的信號與成因
+			SIGINT 行程被中斷
+			SIGQUIT 有人要求形成停止，並且將記憶體傾瀉在 core dump 檔案中 //https://zh.wikipedia.org/wiki/%E6%A0%B8%E5%BF%83%E8%BD%AC%E5%82%A8
+			SIGFPE 浮點數錯誤
+			SIGTRAP 偵錯器詢問行程在哪裡
+			SIGSEGV 行程試圖存取不合法的記憶體
+			SIGWINCH 終端視窗改變尺寸
+			SIGTERM 有人要求核心（kernal）殺掉行程
+			SIGPIPE 行程寫入沒有東西讀取的管線

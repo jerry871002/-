@@ -308,3 +308,38 @@ strdup() 函式能夠在 heap 某處重新產生該字串的完整副本
 			SIGWINCH 終端視窗改變尺寸
 			SIGTERM 有人要求核心（kernal）殺掉行程
 			SIGPIPE 行程寫入沒有東西讀取的管線
+
+		使用 kill 傳送訊號
+			$ ps
+			77868 ttys003 0:00.02 bash
+			78222 ttys003 0:00.01 ./testprog
+			$ kill 78222 // 傳送 SIGTERM 給程式
+			$ kill -INT 78222 // 傳送 SIGTINT 給程式
+			$ kill -SEGV 78222 // 傳送 SIGSEGV 給程式
+			$ kill -KILL 78222 // 傳送 SIGKILL 給程式，不能被忽略！！
+
+			SIGKILL 不能被程式碼捕捉，也不能被忽略，所以*無論如何* kill -KILL <pid> 總是會殺掉你的程式
+
+		用 raise() 傳送信號
+			使用 raise() 命令可以讓行程把信號傳送給自己，像這樣：
+				raise(SIGTERM);
+
+			舉例來說，*警示信號*（alarm signal），*SIGALARM*，就是個常見的用法
+			警示信號通常由行程的*定時器*（interval timer）所建立，他將在未來的某個時間，觸發 SIGALARM信號
+
+				catch_signal(SIGALARM, pour_coffee);
+				alarm(120); // 定時器每隔120秒觸發一次
+				do_important_busy_work();
+				do_more_busy_work();
+
+			警示信號讓你進行*多工*（multitask）處理，假如你每隔幾秒就必需執行特定工作，或是想要限制花在某項工作的時間量，那警示信號就是讓程式*打斷他自己*的好方法
+
+			>別同時使用 alarm() 跟 sleep()，因為他們使用相同的定時器，會互相干擾
+
+		重設及忽略信號
+			*SIG_DFL* 表示*預設的處理方式*
+				catch_signal(SIGTERM, SIG_DFL);
+			*SIG_IGN* 叫行程完全*忽略*信號
+				catch_signal(SIGINT, SIG_IGN);
+
+		總結這部分的範例放在 signal_handle 的 signals_example.c

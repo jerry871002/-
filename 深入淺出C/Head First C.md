@@ -166,16 +166,117 @@
 		`-L`旗標應該出現在`gcc`指令裡頭的原始碼檔案之後
 
 * 動態程式庫  
-	動態程式庫在**執行時期**（runtime）才被連結到程式
-	在不同的作業系統上有不同的名稱
+	動態程式庫在**執行時期**（runtime）才被連結到程式  
+	* 在不同的作業系統上有不同的名稱
 
-	1. hfcal.dll（Windows 上的 MinGW）
-	2. libhfcal.dll.a（Windows 上的 Cygwin）
-	3. libhfcal.so（Linux 或 Unix）
-	4. libhfcal.dylib（Mac）  
+		1. `hfcal.dll`（Windows 上的 MinGW）
+		2. `libhfcal.dll.a`（Windows 上的 Cygwin）
+		3. `libhfcal.so`（Linux 或 Unix）
+		4. `libhfcal.dylib`（Mac）  
 
-	備註：Linux 或 Unix 上的 so 代表共用目的檔（shared object file），Mac 上的 dylib 代表動態程式庫（dynamic library）
-	用 -shared 旗標
-		gcc -shared hfcal.o -o /libs/libhfcal.dylib
+		備註：Linux 或 Unix 上的`so`代表**共用目的檔**（shared object file），Mac 上的`dylib`代表**動態程式庫**（dynamic library）  
+	* 用`-shared`旗標建立動態程式庫
+		
+		```bash
+		$ gcc -shared hfcal.o -o /libs/libhfcal.dylib
+		```
 
-靜態與動態程式庫的範例在 static-library 跟 dynamic-library 裡面
+	靜態與動態程式庫的範例分別在 static-library 跟 dynamic-library 裡面
+	
+## 第九章、行程與系統呼叫
+
+* `system()`函式  
+	`system()`函式接受單一參數並執行，就像直接在命令列上輸入一樣，簡單又方便  
+	
+	```c
+	system("ls -l");
+	```
+
+	但是`system()`函式並不安全，有可能被**住入**（inject）程式碼片段，範例在 unsafe\_system_call 裡面  
+	這個範例還有其他可能遇到的問題，詳情請洽第 403 頁
+
+* `exec()`函式
+	`exec()`函式透過執行某個程式來**替換當前的行程**  
+	行程就是**在記憶體裡執行的程式**，作業系統用**行程識別符**（process identifier，PID）來追蹤每個行程
+
+	`exec()`函式有很多不同版本，主要分成兩群，串列（list）函式跟陣列（array）函式
+	
+	* 串列（list）函式，接受參數串列的命令列引數：  
+		* execl()  
+		* execlp()：根據路徑（PATH）搜尋程式  
+		* execle()：使用環境陣列的字串
+	* 陣列（array）函式，如果命令列引數已經先存在串列裡面的話：  
+		* execv()  
+		* execvp()：根據路徑（PATH）搜尋程式  
+		* execve()：使用環境陣列的字串  
+		
+	看出規則了吧～～
+
+	範例在這，假如有一個檔案`dinner_info.c`，內容如下：
+
+	```c
+	#include <stdio.h>
+	#include <stdlib.h>
+
+	int main(int argc, char *argv[]) {
+		printf("Dinners: %s\n", argv[1]);
+		printf("Juice: %s\n", getenv("JUICE")); //stdlib.h 裡的 getenv() 讓你讀取環境變數
+		return 0;
+	}
+	```
+	然後你執行：
+	
+	```c
+	//陣列的最後一個項目必須是 NULL
+	char *my_env[] = {"JUICE=peach and apple", NULL};
+	
+	//這裡需要 NULL 告訴函式沒有其他引數了
+	execle("dinner_info", "dinner_info", "4", NULL, my_env);
+	```
+	結果會長這樣：
+	
+	```
+	Dinners: 4
+	Juice: peach and apple
+	```
+
+* 系統呼叫的錯誤處理  
+	檢查錯誤的方法有很多：
+	  
+	1. 如果`exec()`呼叫成功，當前程式便會**停止執行**，因此，假如程式在呼叫`exec()`之後還在執行任何工作，那一定是有問題
+	2. 也可以檢查`exec()`函式是否回傳`-1`
+	3. 但這邊要介紹的是`errno`變數
+	
+		`errno`變數是儲存在`errno.h`裡的**全域變數**，有一連串標準錯誤值：
+		
+		* `EPERM=1` Operation not permitted
+		* `ENOENT=2` No such file or directory
+		* `ESRCH=3` No such process  
+		* 還有另外一百多種錯誤，詳情可參見[維基百科](https://zh.wikipedia.org/wiki/Errno.h)
+		
+		因為`errno`變數實際上只是數字，可以使用`string.h`裡的`strerror()`函式查詢標準錯誤訊息（就是那個數字代表的含意）：  
+		
+		```c
+		puts(strerror(errno));	//將錯誤數字轉換為錯誤訊息
+		```
+
+	相關的範例放在 exec\_error_handle 裡面
+
+* `fork()`函式  
+	`fork()`函式會複製你的行程，為當前行程產生完整**副本**  
+	原先的行程被稱作**父行程**，新建立的副本叫做**子行程**
+
+	呼叫`fork()`的方法：
+	
+	```c
+	pid_t pid = fork();
+	```
+	`pid_t`的型態取決於作業系統，有些使用`short`，有些可能使用`int`  
+	`fork()`回傳`0`的整數值給子行程，回傳**正的整數值**給父行程，父行程會收到子行程的行程識別符（PID）
+
+	範例（在 rssgossip 裡的 newshound.c）：用`exec()`呼叫 Python 程式讀取 RSS 檔案
+
+* 小整理  
+	1. `system()`像控制台命令那樣執行字串
+	2. `fork()`複製當前行程
+	3. `fork()`+`exec()`建立子行程

@@ -34,13 +34,13 @@
 
 * 記憶體存儲器（位址由高至低）
 
-	名稱               |用途
-	-------------------|-----------------------
-	Stack（堆疊）       | 區域變數（local variables）
-	Heap（堆積）        | 動態記憶體（dynamic memory）
-	Globals（全域區段）  | 全域變數（global variables）
-	Constants（常數區段）| 唯讀
-	Code（程式碼區段）   | 唯讀
+	名稱               	|用途
+	-------------------	|-----------------------
+	Stack（堆疊）       	| 區域變數（local variables）
+	Heap（堆積）        	| 動態記憶體（dynamic memory）
+	Globals（全域區段）  	| 全域變數（global variables）
+	Constants（常數區段）	| 唯讀
+	Code（程式碼區段）   	| 唯讀
 
 * 指標構成的陣列
 
@@ -99,7 +99,7 @@
 	```c
 	void (*replies[])(response) = {dump, second_chance, marriage}; //陣列裡面存放指向函式的指標
 	```
-	範例程式在 mail_merge 裡面
+	範例程式在 [mail_merge]() 裡面
 
 * 可變參數函式（Variadic function）  
 	直接來個範例：
@@ -181,7 +181,7 @@
 		$ gcc -shared hfcal.o -o /libs/libhfcal.dylib
 		```
 
-	靜態與動態程式庫的範例分別在 static-library 跟 dynamic-library 裡面
+	靜態與動態程式庫的範例分別在 [static-library]() 跟 [dynamic-library]() 裡面
 	
 ## 第九章、行程與系統呼叫
 
@@ -192,7 +192,7 @@
 	system("ls -l");
 	```
 
-	但是`system()`函式並不安全，有可能被**住入**（inject）程式碼片段，範例在 unsafe\_system_call 裡面  
+	但是`system()`函式並不安全，有可能被**住入**（inject）程式碼片段，範例在 [unsafe\_system_call]() 裡面  
 	這個範例還有其他可能遇到的問題，詳情請洽第 403 頁
 
 * `exec()`函式
@@ -260,7 +260,7 @@
 		puts(strerror(errno));	//將錯誤數字轉換為錯誤訊息
 		```
 
-	相關的範例放在 exec\_error_handle 裡面
+	相關的範例放在 [exec\_error_handle]() 裡面
 
 * `fork()`函式  
 	`fork()`函式會複製你的行程，為當前行程產生完整**副本**  
@@ -274,9 +274,280 @@
 	`pid_t`的型態取決於作業系統，有些使用`short`，有些可能使用`int`  
 	`fork()`回傳`0`的整數值給子行程，回傳**正的整數值**給父行程，父行程會收到子行程的行程識別符（PID）
 
-	範例（在 rssgossip 裡的 newshound.c）：用`exec()`呼叫 Python 程式讀取 RSS 檔案
+	範例（在 [rssgossip]() 裡的 [newshound.c]()）：用`exec()`呼叫 Python 程式讀取 RSS 檔案
 
 * 小整理  
 	1. `system()`像控制台命令那樣執行字串
 	2. `fork()`複製當前行程
 	3. `fork()`+`exec()`建立子行程
+
+## 第十章、行程間通訊（Interprocess communication）
+
+* 檔案描述子是代表**資料串流**的數字  
+表格的前三個槽位（slot）總是相同
+	* 槽位 0 是標準輸入
+	* 槽位 1 是標準輸出
+	* 槽位 2 是標準錯誤
+
+* 使用`>`及`2>`重導向標準輸出和標準錯誤
+
+	```bash
+	$ ./myprog > output.txt 2> errors.log
+	```
+	`2`代表描述子表格裡的**標準錯誤**數字
+
+* 也可以把標準錯誤重導向到與標準輸出相同的地方
+
+	```bash
+	$ ./myprog 2> &1
+	```
+	`2>`表示「重導向標準錯誤」
+	`&1`表示「到標準輸出去」
+
+* `fileno()`告訴你描述子  
+	假如你讀了一個檔案
+
+	```c
+	FILE *my_file = fopen("Gguitar.mp3", "r");
+	```
+	**描述子表格**（description table）變這樣
+	
+	 \#		|資料串流			|在幹嘛
+	 -----	|---------------	|-----------
+	 0		|鍵盤				|標準輸入
+	 1		|螢幕				|標準輸出
+	 2		|螢幕				|標準錯誤
+	 3		|資料庫連接			|其他串流
+	 4		|guitar.mp3 檔案	|我們讀進來的檔案在這
+	 
+	 最後
+	 
+	 ```c
+	 int descriptor = fileno(my_file);	//這會回傳 4
+	 ```
+	
+* `dup2()`複製資料串流
+
+* waitpid() 函式  
+	在`sys/wait.h`標頭檔裡  
+	有三個參數，像這樣用：`waitpid(pid, pid_status, options)` 
+	 
+	1. `pid`：就行程識別符
+	2. `pid_status`：指向整數的指標（因為需要更新它），儲存行程的**結束資訊**（exit information）
+	3. `options`：沒事的話設定 0 就好，代表等到該行程結束，欲知詳情，可用 `man waitpid`查詢
+
+	以上三個函式的範例在 [rssgossip]() 裡的 [newshound2.c]()（改編前面的程式來的！）
+
+* 用 pipe() 連接行程  
+	先來看看怎麼用
+	
+	```c
+	int fd[2]; //The descriptors will be stored in this array.
+
+	//You pass the name of the array to the pipe() function
+	if (pipe(fd) == -1) {
+		error("Can't create the pipe");
+	}
+	```
+
+	其中，`fd[1]`是資料的入口（寫入管線），`fd[0]`是資料的出口（可以從管線讀取）  
+	注意一點是一個管線只能**單向**傳送資料串流，所以如果是子行程要傳送資料給父行程  
+	在子行程中：
+	
+	```c
+	close(fd[0]); 	//The child won’t read from the pipe, this will close the read end of the pipe.
+	dup2(fd[1], 1); //The child then connects the write end to the Standard Output
+	```
+	在父行程中：
+	
+	```c
+	dup2(fd[0], 0);	//The parent connects the read end to the Standard Output.
+	close(fd[1]); 	//This will close the write end of the pipe.
+	```
+
+	詳細的範例在 [rssgossip]() 裡的 [new_opener.c]()（也是改編前面的程式來的）
+
+* 信號（signal）  
+	平常在終端機執行程式時，使用者鍵入`Ctrl-C`，程式便終止，實際上發生的流程如下：
+	
+	1. 鍵入 Ctrl-C
+	2. 作業系統傳送中斷信號
+	3. 行程執行它的**預設中斷處理器**（interrupt handler），呼叫`exit()`
+
+	每一種信號都有對應的信號處理器（signal handler），記錄在信號表格（signal table）中，信號處理器的內容可以用自己寫的程式碼取代
+
+	* `sigaction`  
+		`sigaction`是包含指向函式之指標的`struct`，用來告訴作業系統，當某個信號被送給行程時，他應該呼叫哪個函式  
+		以下說明如何建立`sigaction`
+		
+		```c
+		struct sigaction action; // 建立新動作
+		action.sa_handler = diediedie; // 想要電腦呼叫的函式名稱，sigaction 包裹的函式稱作處理器
+		sigemptyset(&sction.sa_mask); // mask（遮罩）是過濾 sigaction 將處理之信號的機制，通常用空的就好
+		action.sa_flags = 0; // 額外的旗標，平常沒事用 0 就好
+		```
+
+		因為所有信號都只是整數值，自訂處理器函式（custom handler function）必須接受`int`引數
+
+		```c
+		void diediedie(int sig) //sig 是處理器已經捕捉到的信號數字
+		{
+			puts("Goodbye cruel world...\n");
+			exit(1);
+		}
+		```
+
+		* `sigaction`以`sigaction()`註冊  
+			用`sigaction()`函式來告訴作業系統我們剛剛建立的`sigaction`  
+			`sigaction()`接受三個參數：  
+			
+			```c
+			sigaction(signal_no, &new_action, &old_action);
+			```
+			
+			1. 信號數字：你想要處理的信號整數值
+			2. 新動作：你想要註冊的`sigaction`的位址
+			3. 舊動作：沒事的話用`NULL`就好
+			如果發生失敗，`sigaction()`會回傳 -1，並且設定`errno`變數
+
+			把它變得更容易使用一點，寫一個函式把這個過程包起來：
+			
+			```c
+			int catch_signal(int sig, void (*handler)(int))	//信號數字跟指向處理器函式的指標
+			{
+				struct sigaction action;		//建立 aciton
+				action.sa_handler = handler;	//將該 action 的處理器函式設定成傳進來的處理器函式
+				sigemptyset(&sction.sa_mask);	//使用空的 mask
+				action.sa_flags = 0;
+				return sigaction(sig, &action, NULL);
+			}
+			```
+			用法像這樣：
+			
+			```c
+			catch_signal(SIGINT, diediedie);
+			```
+
+			簡單的範例在 [signal_handle]() 裡的 [SIGINT_handle.c]()
+
+	* 常出現的信號與成因  
+		* `SIGINT`行程被中斷
+		* `SIGQUIT`有人要求形成停止，並且將記憶體傾瀉在 [core dump](https://zh.wikipedia.org/wiki/%E6%A0%B8%E5%BF%83%E8%BD%AC%E5%82%A8) 檔案中 
+		* `SIGFPE`浮點數錯誤
+		* `SIGTRAP`偵錯器詢問行程在哪裡
+		* `SIGSEGV`行程試圖存取不合法的記憶體
+		* `SIGWINCH`終端視窗改變尺寸
+		* `SIGTERM`有人要求核心（kernal）殺掉行程
+		* `SIGPIPE`行程寫入沒有東西讀取的管線
+
+	* 使用`kill`傳送訊號
+
+		```bash
+		$ ps
+		77868 ttys003 0:00.02 bash
+		78222 ttys003 0:00.01 ./testprog
+		```
+		
+		```bash
+		$ kill 78222 //傳送 SIGTERM 給程式
+		$ kill -INT 78222 //傳送 SIGTINT 給程式
+		$ kill -SEGV 78222 //傳送 SIGSEGV 給程式
+		$ kill -KILL 78222 //傳送 SIGKILL 給程式，不能被忽略！！
+		```
+
+		`SIGKILL`不能被程式碼捕捉，也不能被忽略，所以**無論如何**`kill -KILL <pid>`總是會殺掉你的程式
+
+	* 用`raise()`傳送信號  
+		使用`raise()`命令可以讓行程把信號傳送給自己，像這樣：
+		
+		```c
+		raise(SIGTERM);
+		```
+
+		舉例來說，**警示信號**（alarm signal），**SIGALARM**，就是個常見的用法  
+		警示信號通常由行程的**定時器**（interval timer）所建立，他將在未來的某個時間，觸發`SIGALARM`信號
+		
+		```c
+		catch_signal(SIGALARM, pour_coffee);
+		alarm(120); // 定時器每隔120秒觸發一次
+		do_important_busy_work();
+		do_more_busy_work();
+		```
+
+		警示信號讓你進行**多工**（multitask）處理，假如你每隔幾秒就必需執行特定工作，或是想要限制花在某項工作的時間量，那警示信號就是讓程式**打斷他自己**的好方法
+
+		> 別同時使用 alarm() 跟 sleep()，因為他們使用相同的定時器，會互相干擾
+
+	* 重設及忽略信號  
+		`SIG_DFL`表示**預設的處理方式**
+		
+		```c
+		catch_signal(SIGTERM, SIG_DFL);
+		```
+		`SIG_IGN`叫行程完全**忽略**信號
+		
+		```c
+		catch_signal(SIGINT, SIG_IGN);
+		```
+
+	總結這部分的範例放在 [signal_handle]() 的 [signals_example.c]()
+	
+## 第十一章、Socket 與網路連接
+
+* **協定**是結構化的溝通與對話
+
+* 如果要寫程式與網路交談，需要一種新類型的資料串流，叫做 **Socket**
+
+	```c
+	#include <sys/socket.h>
+	...
+	//listener_d 是該 socket 的描述子
+	int listener_d = socket(PF_INET, SOCK_STREAM, 0); //最後一個參數是協定數字
+	if(listener_d == -1)
+		error("Can't open socket"); //這是之前我們寫的
+	```
+
+* 在伺服器能夠使用 socket 與客戶端交談之前，必須經歷四個階段：
+	* **Bind**（繫結埠口）
+	* **Listen**（偵聽）
+	* **Accept**（接受連接）
+	* **Begin**（開始交談）
+	> 可以用四個單字單第一個字母 **BLAB** 來記憶
+
+	1. 繫結（Bind）到某個埠口
+	
+		```c
+		#include <arpa/inet.h> //需要這個標頭建立網際網路位址
+		...
+		//下面四行表示「網際網路埠口30000」的埠口名稱
+		struct sockaddr_in name;
+		name.sin_family = PF_INET;
+		name.sin_port = (in_port_t)htons(30000);
+		name.sin_addr.s_addr = htonl(INADDR_ANY);
+		int c = bind(listener_d, (struct sockaddr *) &name, sizeof(name));
+		if(c == -1)
+			error("Can't bind to socket");
+		```
+	2. 偵聽
+
+		```c
+		if(listen(listener_d, 10) == -1)
+			error("Can't listen");
+		```
+		以 10 的長度呼叫`listen()`表示同時間最多可以有 10 個客戶端試著連接伺服器，他們不會全部立即被回覆，但是他們可以等待，而第 11 個客戶端皆被告知伺服器「過於忙碌」。
+		>先來的先服務，所以客戶端是在**佇列**（queue）裡等待
+	3. 接受連接
+
+		```c
+		//client_addr 會儲存有關連接上來之客戶端的細節資訊
+		struct sockaddr_storage client_addr;
+		unsigned int address_size = sizeof(client_addr);
+		int connect_d = accept(listener_d, (struct sockaddr *)&client_addr, &address_size);
+		if(connect_d == -1)
+			error("Can't open secondary socket");
+		```
+		這個新的**連接描述子**（connect_d）是伺服器將使用的那個
+	4. 開始對話
+
+* socket 並非典型的資料串流  
+	socket 是**雙向**的，可以使用於輸入和輸出

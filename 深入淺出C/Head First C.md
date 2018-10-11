@@ -23,13 +23,13 @@
 
 		```c
 		char *cards = "JQK";
-		cards[2] = 'R'; // 不合法！！
+		cards[2] = cards[1]; //不合法！！
 		```		
 	* 如果從字串實字重新建立一個陣列，就**「能夠」**修改該陣列  
 
 		```c
-		char card[] = "JQK";
-		card[2] = 'R'; // 合法！！
+		char cards[] = "JQK";
+		cards[2] = cards[1]; //合法！！
 		```
 
 * 記憶體存儲器（位址由高至低）
@@ -78,18 +78,18 @@
 
 	```c
 	int (*wrap_fn)(int);
-	wrap_fn = go_to_wrap_speed; 	//儲存go_to_wrap_speed()函式的位址
-	wrap_fn(4); 					//這就跟呼叫go_to_wrap_speed(4)函式一樣
+	wrap_fn = go_to_wrap_speed; //儲存go_to_wrap_speed()函式的位址
+	wrap_fn(4); //這就跟呼叫go_to_wrap_speed(4)函式一樣
 	```
 
 * 排序函式（sort function）與比較器函式（comparator function）  
 	在`stdlib.h`裡面有一個`qsort()`函式，看起來長這樣
 
 	```c
-	qsort(void array, 									//指向陣列的指標
-		  size_t length, 								//該陣列的長度
-		  size_t item_size, 							//陣列裡每個元素的尺寸
-		  int (*compar)(const void *, const void *)); 	//指向比較陣列裡頭兩個項目的函式
+	qsort(void array, //指向陣列的指標
+		  size_t length, //該陣列的長度
+		  size_t item_size, //陣列裡每個元素的尺寸
+		  int (*compar)(const void *, const void *)); //指向比較陣列裡頭兩個項目的函式
 	```
 	示範的程式放在資料夾 qsort\_with\_comparator 裡面
 
@@ -107,12 +107,12 @@
 	```c
 	#include <stdarg.h> //處理可變參數函式的程式碼都在這
 
-	void print_ints(int args, ...) {					//「...」被稱作「省略」（ellipsis），告訴你後面還有東西
-		va_list ap; 									//va_list 用來儲存要傳進你的函式的額外引數
-		va_start(ap, args); 							//va_start 指名可變動引數從哪裡開始
+	void print_ints(int args, ...) { //「...」被稱作「省略」（ellipsis），告訴你後面還有東西
+		va_list ap; //va_list 用來儲存要傳進你的函式的額外引數
+		va_start(ap, args); //va_start 指名可變動引數從哪裡開始
 		for(int i = 0; i < args; i++)
-			printf("argument: %d\n", va_arg(ap, int)); 	//va_arg 接受兩個值：va_list 和下一個引數的「型別」
-		va_end(ap); 									//讀完之後記得要結束
+			printf("argument: %d\n", va_arg(ap, int)); //va_arg 接受兩個值：va_list 和下一個引數的「型別」
+		va_end(ap); //讀完之後記得要結束
 	}
 
 	//call the function
@@ -330,7 +330,11 @@
 
 * waitpid() 函式  
 	在`sys/wait.h`標頭檔裡  
-	有三個參數，像這樣用：`waitpid(pid, pid_status, options)` 
+	有三個參數，像這樣用：
+	
+	```c
+	waitpid(pid, pid_status, options);
+	``` 
 	 
 	1. `pid`：就行程識別符
 	2. `pid_status`：指向整數的指標（因為需要更新它），儲存行程的**結束資訊**（exit information）
@@ -355,14 +359,14 @@
 	在子行程中：
 	
 	```c
-	close(fd[0]); 	//The child won’t read from the pipe, this will close the read end of the pipe.
+	close(fd[0]); //The child won’t read from the pipe, this will close the read end of the pipe.
 	dup2(fd[1], 1); //The child then connects the write end to the Standard Output
 	```
 	在父行程中：
 	
 	```c
-	dup2(fd[0], 0);	//The parent connects the read end to the Standard Output.
-	close(fd[1]); 	//This will close the write end of the pipe.
+	dup2(fd[0], 0); //The parent connects the read end to the Standard Output.
+	close(fd[1]); //This will close the write end of the pipe.
 	```
 
 	詳細的範例在 [rssgossip]() 裡的 [new_opener.c]()（也是改編前面的程式來的）
@@ -381,10 +385,10 @@
 		以下說明如何建立`sigaction`
 		
 		```c
-		struct sigaction action; // 建立新動作
-		action.sa_handler = diediedie; // 想要電腦呼叫的函式名稱，sigaction 包裹的函式稱作處理器
-		sigemptyset(&sction.sa_mask); // mask（遮罩）是過濾 sigaction 將處理之信號的機制，通常用空的就好
-		action.sa_flags = 0; // 額外的旗標，平常沒事用 0 就好
+		struct sigaction action; //建立新動作
+		action.sa_handler = diediedie; //想要電腦呼叫的函式名稱，sigaction 包裹的函式稱作處理器
+		sigemptyset(&sction.sa_mask); //mask（遮罩）是過濾 sigaction 將處理之信號的機制，通常用空的就好
+		action.sa_flags = 0; //額外的旗標，平常沒事用 0 就好
 		```
 
 		因為所有信號都只是整數值，自訂處理器函式（custom handler function）必須接受`int`引數
@@ -413,11 +417,11 @@
 			把它變得更容易使用一點，寫一個函式把這個過程包起來：
 			
 			```c
-			int catch_signal(int sig, void (*handler)(int))	//信號數字跟指向處理器函式的指標
+			int catch_signal(int sig, void (*handler)(int)) //信號數字跟指向處理器函式的指標
 			{
-				struct sigaction action;		//建立 aciton
-				action.sa_handler = handler;	//將該 action 的處理器函式設定成傳進來的處理器函式
-				sigemptyset(&sction.sa_mask);	//使用空的 mask
+				struct sigaction action; //建立 aciton
+				action.sa_handler = handler; //將該 action 的處理器函式設定成傳進來的處理器函式
+				sigemptyset(&sction.sa_mask); //使用空的 mask
 				action.sa_flags = 0;
 				return sigaction(sig, &action, NULL);
 			}
@@ -449,10 +453,10 @@
 		```
 		
 		```bash
-		$ kill 78222 //傳送 SIGTERM 給程式
-		$ kill -INT 78222 //傳送 SIGTINT 給程式
-		$ kill -SEGV 78222 //傳送 SIGSEGV 給程式
-		$ kill -KILL 78222 //傳送 SIGKILL 給程式，不能被忽略！！
+		$ kill 78222 #傳送 SIGTERM 給程式
+		$ kill -INT 78222 #傳送 SIGTINT 給程式
+		$ kill -SEGV 78222 #傳送 SIGSEGV 給程式
+		$ kill -KILL 78222 #傳送 SIGKILL 給程式，不能被忽略！！
 		```
 
 		`SIGKILL`不能被程式碼捕捉，也不能被忽略，所以**無論如何**`kill -KILL <pid>`總是會殺掉你的程式

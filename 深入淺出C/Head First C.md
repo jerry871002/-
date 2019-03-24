@@ -130,7 +130,7 @@
 
 * 使用`-I`選項來告訴編譯器去哪找標頭檔
 
-	```zsh
+	```bash
 	$ gcc -I/my_header_files test_code.c ... -o test_code
 	```
 	這樣就可以直接用 `#include<some_header.h>` 了（尖括號）

@@ -176,18 +176,18 @@
 
 		備註：Linux 或 Unix 上的`so`代表**共用目的檔**（shared object file），Mac 上的`dylib`代表**動態程式庫**（dynamic library）  
 	* 用`-shared`旗標建立動態程式庫
-		
+
 		```bash
 		$ gcc -shared hfcal.o -o /libs/libhfcal.dylib
 		```
 
 	靜態與動態程式庫的範例分別在 [static-library]() 跟 [dynamic-library]() 裡面
-	
+
 ## 第九章、行程與系統呼叫
 
 * `system()`函式  
 	`system()`函式接受單一參數並執行，就像直接在命令列上輸入一樣，簡單又方便  
-	
+
 	```c
 	system("ls -l");
 	```
@@ -200,7 +200,7 @@
 	行程就是**在記憶體裡執行的程式**，作業系統用**行程識別符**（process identifier，PID）來追蹤每個行程
 
 	`exec()`函式有很多不同版本，主要分成兩群，串列（list）函式跟陣列（array）函式
-	
+
 	* 串列（list）函式，接受參數串列的命令列引數：  
 		* execl()  
 		* execlp()：根據路徑（PATH）搜尋程式  
@@ -209,7 +209,7 @@
 		* execv()  
 		* execvp()：根據路徑（PATH）搜尋程式  
 		* execve()：使用環境陣列的字串  
-		
+
 	看出規則了吧～～
 
 	範例在這，假如有一個檔案`dinner_info.c`，內容如下：
@@ -225,16 +225,16 @@
 	}
 	```
 	然後你執行：
-	
+
 	```c
 	//陣列的最後一個項目必須是 NULL
 	char *my_env[] = {"JUICE=peach and apple", NULL};
-	
+
 	//這裡需要 NULL 告訴函式沒有其他引數了
 	execle("dinner_info", "dinner_info", "4", NULL, my_env);
 	```
 	結果會長這樣：
-	
+
 	```
 	Dinners: 4
 	Juice: peach and apple
@@ -246,16 +246,16 @@
 	1. 如果`exec()`呼叫成功，當前程式便會**停止執行**，因此，假如程式在呼叫`exec()`之後還在執行任何工作，那一定是有問題
 	2. 也可以檢查`exec()`函式是否回傳`-1`
 	3. 但這邊要介紹的是`errno`變數
-	
+
 		`errno`變數是儲存在`errno.h`裡的**全域變數**，有一連串標準錯誤值：
-		
+
 		* `EPERM=1` Operation not permitted
 		* `ENOENT=2` No such file or directory
 		* `ESRCH=3` No such process  
 		* 還有另外一百多種錯誤，詳情可參見[維基百科](https://zh.wikipedia.org/wiki/Errno.h)
-		
+
 		因為`errno`變數實際上只是數字，可以使用`string.h`裡的`strerror()`函式查詢標準錯誤訊息（就是那個數字代表的含意）：  
-		
+
 		```c
 		puts(strerror(errno));	//將錯誤數字轉換為錯誤訊息
 		```
@@ -267,7 +267,7 @@
 	原先的行程被稱作**父行程**，新建立的副本叫做**子行程**
 
 	呼叫`fork()`的方法：
-	
+
 	```c
 	pid_t pid = fork();
 	```
@@ -311,7 +311,7 @@
 	FILE *my_file = fopen("Gguitar.mp3", "r");
 	```
 	**描述子表格**（description table）變這樣
-	
+
 	 \#		|資料串流			|在幹嘛
 	 -----	|---------------	|-----------
 	 0		|鍵盤				|標準輸入
@@ -319,32 +319,32 @@
 	 2		|螢幕				|標準錯誤
 	 3		|資料庫連接			|其他串流
 	 4		|guitar.mp3 檔案	|我們讀進來的檔案在這
-	 
+
 	 最後
-	 
+
 	 ```c
 	 int descriptor = fileno(my_file);	//這會回傳 4
 	 ```
-	
+
 * `dup2()`複製資料串流
 
-* waitpid() 函式  
+* `waitpid()` 函式  
 	在`sys/wait.h`標頭檔裡  
 	有三個參數，像這樣用：
-	
+
 	```c
 	waitpid(pid, pid_status, options);
-	``` 
-	 
+	```
+
 	1. `pid`：就行程識別符
 	2. `pid_status`：指向整數的指標（因為需要更新它），儲存行程的**結束資訊**（exit information）
 	3. `options`：沒事的話設定 0 就好，代表等到該行程結束，欲知詳情，可用 `man waitpid`查詢
 
 	以上三個函式的範例在 [rssgossip]() 裡的 [newshound2.c]()（改編前面的程式來的！）
 
-* 用 pipe() 連接行程  
+* 用 `pipe()` 連接行程  
 	先來看看怎麼用
-	
+
 	```c
 	int fd[2]; //The descriptors will be stored in this array.
 
@@ -357,13 +357,13 @@
 	其中，`fd[1]`是資料的入口（寫入管線），`fd[0]`是資料的出口（可以從管線讀取）  
 	注意一點是一個管線只能**單向**傳送資料串流，所以如果是子行程要傳送資料給父行程  
 	在子行程中：
-	
+
 	```c
 	close(fd[0]); //The child won’t read from the pipe, this will close the read end of the pipe.
 	dup2(fd[1], 1); //The child then connects the write end to the Standard Output
 	```
 	在父行程中：
-	
+
 	```c
 	dup2(fd[0], 0); //The parent connects the read end to the Standard Output.
 	close(fd[1]); //This will close the write end of the pipe.
@@ -373,7 +373,7 @@
 
 * 信號（signal）  
 	平常在終端機執行程式時，使用者鍵入`Ctrl-C`，程式便終止，實際上發生的流程如下：
-	
+
 	1. 鍵入 Ctrl-C
 	2. 作業系統傳送中斷信號
 	3. 行程執行它的**預設中斷處理器**（interrupt handler），呼叫`exit()`
@@ -383,7 +383,7 @@
 	* `sigaction`  
 		`sigaction`是包含指向函式之指標的`struct`，用來告訴作業系統，當某個信號被送給行程時，他應該呼叫哪個函式  
 		以下說明如何建立`sigaction`
-		
+
 		```c
 		struct sigaction action; //建立新動作
 		action.sa_handler = diediedie; //想要電腦呼叫的函式名稱，sigaction 包裹的函式稱作處理器
@@ -404,18 +404,18 @@
 		* `sigaction`以`sigaction()`註冊  
 			用`sigaction()`函式來告訴作業系統我們剛剛建立的`sigaction`  
 			`sigaction()`接受三個參數：  
-			
+
 			```c
 			sigaction(signal_no, &new_action, &old_action);
 			```
-			
+
 			1. 信號數字：你想要處理的信號整數值
 			2. 新動作：你想要註冊的`sigaction`的位址
 			3. 舊動作：沒事的話用`NULL`就好
 			如果發生失敗，`sigaction()`會回傳 -1，並且設定`errno`變數
 
 			把它變得更容易使用一點，寫一個函式把這個過程包起來：
-			
+
 			```c
 			int catch_signal(int sig, void (*handler)(int)) //信號數字跟指向處理器函式的指標
 			{
@@ -427,7 +427,7 @@
 			}
 			```
 			用法像這樣：
-			
+
 			```c
 			catch_signal(SIGINT, diediedie);
 			```
@@ -436,7 +436,7 @@
 
 	* 常出現的信號與成因  
 		* `SIGINT`行程被中斷
-		* `SIGQUIT`有人要求形成停止，並且將記憶體傾瀉在 [core dump](https://zh.wikipedia.org/wiki/%E6%A0%B8%E5%BF%83%E8%BD%AC%E5%82%A8) 檔案中 
+		* `SIGQUIT`有人要求形成停止，並且將記憶體傾瀉在 [core dump](https://zh.wikipedia.org/wiki/%E6%A0%B8%E5%BF%83%E8%BD%AC%E5%82%A8) 檔案中
 		* `SIGFPE`浮點數錯誤
 		* `SIGTRAP`偵錯器詢問行程在哪裡
 		* `SIGSEGV`行程試圖存取不合法的記憶體
@@ -451,7 +451,7 @@
 		77868 ttys003 0:00.02 bash
 		78222 ttys003 0:00.01 ./testprog
 		```
-		
+
 		```bash
 		$ kill 78222 #傳送 SIGTERM 給程式
 		$ kill -INT 78222 #傳送 SIGTINT 給程式
@@ -463,14 +463,14 @@
 
 	* 用`raise()`傳送信號  
 		使用`raise()`命令可以讓行程把信號傳送給自己，像這樣：
-		
+
 		```c
 		raise(SIGTERM);
 		```
 
 		舉例來說，**警示信號**（alarm signal），**SIGALARM**，就是個常見的用法  
 		警示信號通常由行程的**定時器**（interval timer）所建立，他將在未來的某個時間，觸發`SIGALARM`信號
-		
+
 		```c
 		catch_signal(SIGALARM, pour_coffee);
 		alarm(120); // 定時器每隔120秒觸發一次
@@ -484,18 +484,18 @@
 
 	* 重設及忽略信號  
 		`SIG_DFL`表示**預設的處理方式**
-		
+
 		```c
 		catch_signal(SIGTERM, SIG_DFL);
 		```
 		`SIG_IGN`叫行程完全**忽略**信號
-		
+
 		```c
 		catch_signal(SIGINT, SIG_IGN);
 		```
 
 	總結這部分的範例放在 [signal_handle]() 的 [signals_example.c]()
-	
+
 ## 第十一章、Socket 與網路連接
 
 * **協定**是結構化的溝通與對話
@@ -519,7 +519,7 @@
 	> 可以用四個單字單第一個字母 **BLAB** 來記憶
 
 	1. 繫結（Bind）到某個埠口
-	
+
 		```c
 		#include <arpa/inet.h> //需要這個標頭建立網際網路位址
 		...
